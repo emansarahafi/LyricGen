@@ -4,6 +4,8 @@
 
 LyricGen is a sophisticated machine learning-based lyric generation tool that leverages a custom Transformer-based neural network to generate and complete song lyrics. The model processes multilingual datasets from Genius and generates contextually coherent lyrical content across three languages: English, French, and Arabic.
 
+[![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/code/emanafi/lyricgen)
+
 ## Features
 
 - **Multilingual Support**: Generates lyrics in English, French, and Arabic with language-specific tokenizers
@@ -121,7 +123,3 @@ The model's performance is evaluated using:
 
 **Eman Sarah Afi**  
 Fall 2024
-
----
-
-[![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/code/emanafi/lyricgen)
