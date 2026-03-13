@@ -1,17 +1,18 @@
 # LyricGen - AI-Powered Lyric Completion Tool
 
+[![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/code/emanafi/lyricgen)
+
 ## Overview
 
 LyricGen is a sophisticated machine learning-based lyric generation tool that leverages a custom Transformer-based neural network to generate and complete song lyrics. The model processes multilingual datasets from Genius and generates contextually coherent lyrical content across three languages: English, French, and Arabic.
 
 ## Features
 
-- **Multilingual Support**: Generates lyrics in English, French, and Arabic with language-specific tokenizers
+- **Multilingual Support**: Generates lyrics in English, French, and Arabic with a shared tokenizer for consistent token IDs
 - **Advanced Data Preprocessing**: Comprehensive text cleaning, filtering, and normalization
 - **Transformer Architecture**: Custom implementation with multi-head attention, positional encoding, and layer normalization
-- **Interactive Generation**: User-friendly prediction interface with customizable parameters
-- **Temperature Control**: Adjustable creativity levels (0.3-1.2) for diverse output styles
-- **Performance Evaluation**: BLEU score assessment for model quality
+- **Dual Decoding Modes**: `strict` for controlled deterministic behavior and `quality` for fluent generation with anti-repetition controls
+- **Richer Evaluation**: Exact Match, BLEU, Top-1/Top-3/Top-5 next-token accuracy, and perplexity
 - **Efficient Training**: Optimized for Kaggle environment with ~27K training samples
 
 ## Dependencies
@@ -35,26 +36,26 @@ The model uses the **Genius Song Lyrics with Language Information** dataset from
 
 The model implements a custom Transformer-based architecture:
 
-- **Vocabulary Size**: 15,000 words per language for comprehensive coverage
+- **Vocabulary Size**: Shared tokenizer effective size (capped by 15,000 + padding)
 - **Sequence Length**: 50 tokens for optimal context window
 - **Embedding Dimension**: 256
 - **Attention Heads**: 8 multi-head attention mechanisms
-- **Feed-Forward Dimension**: 512
+- **Feed-Forward Dimension**: 1024
 - **Total Parameters**: Approximately 10-12M parameters
 - **Key Components**:
   - Positional encoding for sequence awareness
   - Multi-head self-attention layers
   - Layer normalization and dropout for regularization
-  - Language-specific tokenization
+  - Shared tokenizer across all supported languages
 
 ## Usage
 
 ### Training the Model
 
 1. Load and preprocess the Genius dataset
-2. Configure language-specific tokenizers (English, French, Arabic)
-3. Train the Transformer model with the prepared sequences
-4. Evaluate performance using BLEU scores
+2. Configure one shared tokenizer across English, French, and Arabic
+3. Train the Transformer model with padding-aware sample weights and label smoothing
+4. Evaluate with Top-1/Top-3/Top-5 next-token accuracy and perplexity
 
 ### Generating Lyrics
 
@@ -65,15 +66,14 @@ predict_next_lyrics(
     seed_text="your starting lyrics here",
     language='en',  # 'en', 'fr', or 'ar'
     num_words=8,
-    temperature=0.7  # 0.3-1.2 for creativity control
+  mode='quality'   # 'quality' or 'strict'
 )
 ```
 
-**Temperature Guidelines**:
+**Decoding Modes**:
 
-- **0.3-0.5**: Conservative, predictable outputs
-- **0.6-0.8**: Balanced mode (recommended)
-- **0.9-1.2**: Creative, experimental outputs
+- **strict**: Deterministic and conservative, better for reproducible comparison runs
+- **quality**: Nucleus sampling + anti-repetition controls, better fluency for sentence generation
 
 ## Preprocessing Pipeline
 
@@ -82,25 +82,27 @@ predict_next_lyrics(
    - English & French: Lowercase conversion, punctuation removal
    - Arabic: Preserve Unicode characters and original case
 3. **Special Token Addition**: Add `<sos>` (start) and `<eos>` (end) markers
-4. **Tokenization**: Language-specific vocabulary building with `<OOV>` handling
+4. **Tokenization**: Shared multilingual tokenizer with `<OOV>` handling
 5. **Sequence Padding**: Normalize to 50-token length
 6. **Dataset Splitting**: 70% training, 15% validation, 15% test
 
 ## Model Training Details
 
 - **Optimizer**: Adam with learning rate scheduling
-- **Loss Function**: Sparse categorical crossentropy
+- **Loss Function**: Sparse categorical crossentropy with label smoothing (`0.1`)
 - **Training Strategy**: Autoregressive next-token prediction
-- **Data Augmentation**: Language-aware processing
-- **Regularization**: Dropout and layer normalization
+- **Regularization**: Dropout, layer normalization, and label smoothing
+- **Padding Handling**: Sample weights exclude padded positions from optimization and metrics
 
 ## Evaluation Metrics
 
 The model's performance is evaluated using:
 
-- **BLEU Scores**: Measure similarity between generated and reference lyrics
-- **Perplexity**: Assess model confidence
-- **Language-Specific Metrics**: Per-language performance analysis
+- **Exact Match**: Strict token-position overlap against references
+- **BLEU Scores**: N-gram overlap between generated and reference continuations
+- **Top-1 / Top-3 / Top-5 Accuracy**: Masked next-token prediction quality
+- **Perplexity**: `exp(loss)` as a language-model confidence/fit indicator
+- **Strict vs Quality Comparison**: Side-by-side evaluation across decoding presets
 
 ## Key Highlights
 
@@ -121,7 +123,3 @@ The model's performance is evaluated using:
 
 **Eman Sarah Afi**  
 Fall 2024
-
----
-
-[![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/code/emanafi/lyricgen)
