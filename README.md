@@ -43,7 +43,7 @@ The model implements a custom Transformer-based architecture:
 - **Feed-Forward Dimension**: 1024
 - **Total Parameters**: Approximately 10-12M parameters
 - **Key Components**:
-  - Positional encoding for sequence awareness
+  - Positional encoding with sqrt(d_model) scaling for sequence awareness
   - Multi-head self-attention layers
   - Layer normalization and dropout for regularization
   - Shared tokenizer across all supported languages
@@ -83,7 +83,7 @@ predict_next_lyrics(
    - Arabic: Preserve Unicode characters and original case
 3. **Special Token Addition**: Add `<sos>` (start) and `<eos>` (end) markers
 4. **Tokenization**: Shared multilingual tokenizer with `<OOV>` handling
-5. **Sequence Padding**: Normalize to 50-token length
+5. **Sequence Padding**: Pre-padding to 50-token length (real tokens occupy final positions)
 6. **Dataset Splitting**: 70% training, 15% validation, 15% test
 
 ## Model Training Details
