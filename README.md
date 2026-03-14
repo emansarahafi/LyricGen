@@ -13,7 +13,9 @@ LyricGen is a sophisticated machine learning-based lyric generation tool that le
 - **Transformer Architecture**: Custom implementation with multi-head attention, positional encoding, and layer normalization
 - **Dual Decoding Modes**: `strict` for controlled deterministic behavior and `quality` for fluent generation with anti-repetition controls
 - **Richer Evaluation**: Exact Match, BLEU, Top-1/Top-3/Top-5 next-token accuracy, and perplexity
-- **Efficient Training**: Optimized for Kaggle environment with ~27K training samples
+- **Weight Tying**: Shared embedding/output weights for parameter efficiency and regularization
+- **LR Warmup**: Linear warmup with inverse-sqrt decay for stable Transformer training
+- **Efficient Training**: Optimized for Kaggle environment with ~70K training samples
 
 ## Dependencies
 
@@ -37,15 +39,17 @@ The model uses the **Genius Song Lyrics with Language Information** dataset from
 The model implements a custom Transformer-based architecture:
 
 - **Vocabulary Size**: Shared tokenizer effective size (capped by 15,000 + padding)
-- **Sequence Length**: 50 tokens for optimal context window
-- **Embedding Dimension**: 256
-- **Attention Heads**: 8 multi-head attention mechanisms
-- **Feed-Forward Dimension**: 1024
-- **Total Parameters**: Approximately 10-12M parameters
+- **Sequence Length**: 80 tokens for longer lyric context
+- **Embedding Dimension**: 192
+- **Attention Heads**: 6 (key_dim=32 per head)
+- **Feed-Forward Dimension**: 768
+- **Decoder Layers**: 3
+- **Total Parameters**: Approximately 4.2M (right-sized for ~70K samples)
 - **Key Components**:
   - Positional encoding with sqrt(d_model) scaling for sequence awareness
   - Multi-head self-attention layers
   - Layer normalization and dropout for regularization
+  - Weight tying between embedding and output layers
   - Shared tokenizer across all supported languages
 
 ## Usage
@@ -83,15 +87,15 @@ predict_next_lyrics(
    - Arabic: Preserve Unicode characters and original case
 3. **Special Token Addition**: Add `<sos>` (start) and `<eos>` (end) markers
 4. **Tokenization**: Shared multilingual tokenizer with `<OOV>` handling
-5. **Sequence Padding**: Pre-padding to 50-token length (real tokens occupy final positions)
+5. **Sequence Padding**: Post-padding to 80-token length (real tokens first, causal mask prevents attending to trailing padding)
 6. **Dataset Splitting**: 70% training, 15% validation, 15% test
 
 ## Model Training Details
 
-- **Optimizer**: Adam with learning rate scheduling
-- **Loss Function**: Sparse categorical crossentropy with label smoothing (`0.1`)
+- **Optimizer**: Adam with LR warmup schedule (peak 5e-4, 2000 warmup steps, inverse-sqrt decay)
+- **Loss Function**: Sparse categorical crossentropy with `from_logits=True` and label smoothing (`0.1`)
 - **Training Strategy**: Autoregressive next-token prediction
-- **Regularization**: Dropout, layer normalization, and label smoothing
+- **Regularization**: Dropout, layer normalization, label smoothing, and weight tying
 - **Padding Handling**: Sample weights exclude padded positions from optimization and metrics
 
 ## Evaluation Metrics
